@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: inventory-service
+  # Config client setting
+  cloud:
+    config:
+      uri: http://localhost:8888
+    # define vault connection details
+    vault:
+      host: localhost
+      port: 8200
+      token: mytoken
+      authentication: token
+      scheme: http

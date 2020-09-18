@@ -1,0 +1,73 @@
+
+# Travis CI Java documentation can be found in:
+# https://docs.travis-ci.com/user/languages/java/
+
+# Each job in Travis CI has several steps:
+# https://docs.travis-ci.com/user/job-lifecycle/
+# The 'language: java' directive sets up sane defaults to test common java applications
+# Enable the 'defaults' to test java application
+language: java
+
+# Specify the JDK version used
+jdk:
+  - openjdk11
+
+# Specify the docker service for building images
+services:
+  - docker
+
+# Dont run the default install step
+# ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+install: true
+
+#
+# env:
+#   global:
+#     secure: CONFIG_SERVER_IMAGE_NAME
+#     secure: REGISTER_SERVICE_IMAGE_NAME
+#     secure: EDGE_SERVICE_IMAGE_NAME
+#     secure: INVENTORY_SERVICE_IMAGE_NAME
+#     secure: PRODUCT_CATALOG_SERVICE_IMAGE_NAME
+#     secure: DOCKER_USER
+#     secure: DOCKER_PASSWORD
+#
+#env:
+#  global:
+#    - secure:
+#    - secure:
+#    - secure:
+#    - secure:
+#    - secure:
+#    - secure:
+#    - secure:
+
+# Keep the local maven repository between various runs to speed up the build process
+cache:
+  directories:
+    - $HOME/.m2
+
+# Change the mvnw permission so the build can use it
+before_install:
+  - chmod +x mvnw
+  - docker pull openjdk:11-jre-slim
+
+# Use this custom install
+script:
+  ./mvnw clean package -Dmaven.test.skip=true
+
+# Create the docker images for core services and push them to Dockerhub repository
+after_success:
+  - export COMMIT=${TRAVIS_COMMIT::7}
+  - export TAG=`if [ ! -z "$TRAVIS_TAG" ]; then echo "$TRAVIS_TAG"; else echo "$TRAVIS_BRANCH--$COMMIT"; fi`
+  - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+  - docker-compose build
+  - docker tag $CONFIG_SERVER_IMAGE_NAME:latest $CONFIG_SERVER_IMAGE_NAME:$TAG
+  - docker push $CONFIG_SERVER_IMAGE_NAME:$TAG
+  - docker tag $REGISTER_SERVICE_IMAGE_NAME:latest $REGISTER_SERVICE_IMAGE_NAME:$TAG
+  - docker push $REGISTER_SERVICE_IMAGE_NAME:$TAG
+  - docker tag $EDGE_SERVICE_IMAGE_NAME:latest $EDGE_SERVICE_IMAGE_NAME:$TAG
+  - docker push $EDGE_SERVICE_IMAGE_NAME:$TAG
+  - docker tag $INVENTORY_SERVICE_IMAGE_NAME:latest $INVENTORY_SERVICE_IMAGE_NAME:$TAG
+  - docker push $INVENTORY_SERVICE_IMAGE_NAME:$TAG
+  - docker tag $PRODUCT_CATALOG_SERVICE_IMAGE_NAME:latest $PRODUCT_CATALOG_SERVICE_IMAGE_NAME:$TAG
+  - docker push $PRODUCT_CATALOG_SERVICE_IMAGE_NAME:$TAG

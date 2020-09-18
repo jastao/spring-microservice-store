@@ -1,0 +1,27 @@
+server:
+  port: 8888
+
+spring:
+  profiles:
+    include: native
+  config:
+    name: configserver
+  cloud:
+    config:
+      server:
+        # local configuration filepath
+        native:
+          searchLocations: classpath:/config-repo
+        # git based configuration filepath
+        #git:
+        #  uri: https://github:com/jastao/spring-microservices-config-repo
+        #  clone-on-start: true
+  #security:
+  #  username: user
+  #  password: pass1234
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

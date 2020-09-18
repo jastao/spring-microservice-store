@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: registry-service
+  # Config client setting
+  cloud:
+    config:
+      uri: http://config-server:8888 #where the config service is running at.
+      fail-fast: true #the service will not run if connection to config server fails.
+
+eureka:
+  instance:
+    hostname: registry-service
+    prefer-ip-address: true #where service registers with registry-service, it uses its IP address rather than its hostname.
+  client:
+    enabled: true
+    registerWithEureka: false
+    fetchRegistry: false
+    eureka-server-read-timeout-seconds: 5

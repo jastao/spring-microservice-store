@@ -1,0 +1,19 @@
+# This configuration will hold common config properties for all other services
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+# Eureka setting
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka # where the registry-service is located.
+  instance:
+    prefer-ip-address: false
+
+# Zipkin
+spring:
+  zipkin:
+    base-url: http://localhost:9411/

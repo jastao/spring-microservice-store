@@ -1,0 +1,40 @@
+server:
+  port: 8082
+
+logging:
+  level:
+    com:
+      jt:
+        inventory:
+          service: info
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+  datasource:
+    initialization-mode: always
+    continue-on-error: true
+# H2
+    url: jdbc:h2:mem:InventoryDb?DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+  h2:
+    console:
+      enabled: true
+      settings:
+        web-allow-others: true
+# Mysql
+    #url: jdbc:mysql://localhost:3306/InventoryDb?useSSL=true&autoReconnect=true
+    #driver-class-name: com.mysql.jdbc.Driver
+    #username: user
+    #password: pass1234
+
+# Distributed logging properties for sleuth and zipkin
+  sleuth:
+    sampler:
+      probability: 1
+  zipkin:
+    base-url: http://localhost:9411/

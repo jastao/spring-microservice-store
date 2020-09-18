@@ -1,0 +1,203 @@
+version: '3.8'
+
+services:
+
+  ####################################
+  # External Tool Initialization
+  ####################################
+
+  # Initialize a development mode of a vault instance.
+  vault:
+    image: vault:latest
+    container_name: vault
+    restart: always
+    ports:
+      - 8200:8200
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=mytoken
+    #  - VAULT_ADDR=http://127.0.0.1:8200
+    #  - VAULT_API_ADDR=http://127.0.0.1:8200
+    # For non dev server use
+    #command: ['vault', 'server', '-config=/vault/config/vault-config.json']
+    cap_add:
+      - IPC_LOCK # Add container capabilities for vault binary to lock memory to protect sensitive data copying to disk.
+    networks:
+      - simplenet
+
+  setup-vault:
+    image: vault:latest
+    container_name: setup-vault
+    entrypoint: /bin/sh
+    volumes:
+      - './vault/logs:/vault/logs'
+      - './vault/config:/vault/config'
+      - './vault/data:/vault/data'
+    environment:
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_API_ADDR=http://vault:8200
+      - CONFIG_DIR=/vault/config
+    command: >
+      -c "
+      sleep 2;
+      ./vault/config/init-vault.sh;
+      "
+    depends_on:
+      - vault
+    networks:
+      - simplenet
+
+  # mysql docker initialization
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: inventory_db
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'pass1234'
+      MYSQL_ROOT_PASSWORD: 'root1234'
+    ports:
+      - 3306:3306
+    volumes:
+      - ./db-data:/var/lib/mysql
+      - ./scripts:/docker-entrypoint-initdb.d
+    networks:
+      - simplenet
+
+  # Zipkin docker initialization
+  # The zipkin process exposes the POST endpoint that instrumentation can send trace data to.
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    restart: always
+    environment:
+      - STORAGE_TYPE=mem
+      # Uncomment to disable scribe
+      # - SCRIBE_ENABLED=false
+      # Uncomment to enable self-tracing
+      # - SELF_TRACING_ENABLED=true
+      # Uncomment to enable debug logging
+      # - JAVA_OPTS=-Dlogging.level.zipkin=DEBUG
+    ports:
+      - 9411:9411
+    networks:
+      - simplenet
+
+  # Prometheus docker initialization
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    volumes:
+      - './prometheus:/etc/prometheus'
+      - './prometheus:/prometheus'
+    ports:
+      - 9090:9090
+    command: ['--config.file=/etc/prometheus/prometheus.yml']
+    networks:
+      - simplenet
+
+  # Grafana docker initialization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      - './grafana:/var/lib/grafana'
+    networks:
+      - simplenet
+
+  ####################################
+  # Core Service Configuration
+  ####################################
+
+  # Docker image configuration for the Spring Cloud Config Server
+  config-server:
+    container_name: config-server:latest
+    build: ./config-server
+    ports:
+      - 8888:8888
+    environment:
+      - "SPRING_PROFILES_ACTIVE=native"
+    networks:
+      - simplenet
+
+  # Docker image configuration for the Eureka service
+  registry-service:
+    container_name: registry-service:latest
+    build: ./registry-service
+    ports:
+      - 8761:8761
+    depends_on:
+      - config-server
+    environment:
+      - "SPRING_PROFILES_ACTIVE=docker"
+    networks:
+      - simplenet
+
+  # Only the edge-service is exposed to the outside thru port 8080. All other internal services are only accessible
+  # thru the edge-service on port 8080.
+  # Docker image configuration for the Spring Cloud Gateway
+  edge-service:
+    container_name: edge-service:latest
+    build: ./edge-service
+    restart: on-failure
+    depends_on:
+      - config-server
+      - setup-vault
+    ports:
+      - 8080:8080
+   # entrypoint: /bin/sh
+    environment:
+      - "SPRING_PROFILES_ACTIVE=docker"
+    networks:
+      - simplenet
+   #command: >
+   #  -c "
+   #     java -jar -Dspring.profiles.active=docker /app.jar;
+   #   "
+  # Docker image configuration for the inventory service
+  inventory-service:
+    container_name: inventory-service:latest
+    build: ./inventory-service
+    restart: on-failure
+    depends_on:
+      - setup-vault
+      - mysql
+      - config-server
+    #entrypoint: /bin/sh
+    environment:
+      - "SPRING_PROFILES_ACTIVE=docker"
+    networks:
+      - simplenet
+    #command: >
+    #  -c "
+    #    java -jar -Dspring.profiles.active=docker /app.jar;
+    #  "
+  # Docker image configuration for the product catalog service
+  product-catalog-service:
+    container_name: product-catalog-service:latest
+    build: ./product-catalog-service
+    restart: on-failure
+    depends_on:
+      - setup-vault
+      - mysql
+      - config-server
+      - inventory-service
+    #entrypoint: /bin/sh
+    environment:
+      - "SPRING_PROFILES_ACTIVE=docker"
+    networks:
+      - simplenet
+    #command: >
+    #  -c "
+    #  java -jar -Dspring.profiles.active=docker /app.jar;
+    #  "
+
+networks:
+  simplenet:
+    driver: bridge

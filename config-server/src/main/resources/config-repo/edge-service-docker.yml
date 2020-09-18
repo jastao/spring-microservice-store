@@ -1,0 +1,17 @@
+management:
+  endpoint:
+    gateway:
+      enabled: true
+
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          # Enable gateway to create routes based on service registered with Discovery Client
+          enabled: true
+          # Turn the service route id to lower case, default is set to upper
+          lower-case-service-id: true

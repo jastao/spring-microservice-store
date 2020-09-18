@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: product-catalog-service
+  cloud:
+    # define vault connection details
+    config:
+      uri: http://config-server:8888
+    vault:
+      host: vault
+      port: 8200
+      token: mytoken
+      authentication: token
+      scheme: http

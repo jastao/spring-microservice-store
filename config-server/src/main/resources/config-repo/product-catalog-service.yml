@@ -1,0 +1,55 @@
+server:
+  port: 8081
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+  datasource:
+    initialization-mode: always
+    continue-on-error: true
+    # H2
+    url: jdbc:h2:mem:ProductCatalogDb?DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+  h2:
+    console:
+      enabled: true
+      settings:
+        web-allow-others: true
+    # Mysql
+    #url: jdbc:mysql://localhost:3306/ProductCatalogDb?useSSL=true&autoReconnect=true
+    #driver-class-name: com.mysql.jdbc.Driver
+    #username: user
+    #password: pass1234
+
+  # Distributed logging properties for sleuth and zipkin
+  sleuth:
+    sampler:
+      probability: 1
+  zipkin:
+    base-url: http://localhost:9411/
+
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+
+# Resilience4j Circuit Breaker specified properties.
+# Refer to the Resilience4j official documentation for more details.
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        slidingWindowType: TIME_BASED
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5000
+        minimumNumberOfCalls: 3
+        permittedNumberOfCallsInHalfOpenState: 1
+    instances:
+      inventory-service:
+        baseConfig: default
+        failureRateThreshold: 33
