@@ -117,7 +117,8 @@ services:
 
   # Docker image configuration for the Spring Cloud Config Server
   config-server:
-    container_name: config-server:latest
+    image: jastao/config-server:latest
+    container_name: config-server
     build: ./config-server
     ports:
       - 8888:8888
@@ -128,7 +129,8 @@ services:
 
   # Docker image configuration for the Eureka service
   registry-service:
-    container_name: registry-service:latest
+    image: jastao/registry-service:latest
+    container_name: registry-service
     build: ./registry-service
     ports:
       - 8761:8761
@@ -143,7 +145,8 @@ services:
   # thru the edge-service on port 8080.
   # Docker image configuration for the Spring Cloud Gateway
   edge-service:
-    container_name: edge-service:latest
+    image: jastao/edge-service:latest
+    container_name: edge-service
     build: ./edge-service
     restart: on-failure
     depends_on:
@@ -162,7 +165,8 @@ services:
    #   "
   # Docker image configuration for the inventory service
   inventory-service:
-    container_name: inventory-service:latest
+    image: jastao/inventory-service:latest
+    container_name: inventory-service
     build: ./inventory-service
     restart: on-failure
     depends_on:
@@ -180,7 +184,8 @@ services:
     #  "
   # Docker image configuration for the product catalog service
   product-catalog-service:
-    container_name: product-catalog-service:latest
+    image: jastao/product-catalog-service:latest
+    container_name: product-catalog-service
     build: ./product-catalog-service
     restart: on-failure
     depends_on:
