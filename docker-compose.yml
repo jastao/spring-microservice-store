@@ -67,7 +67,7 @@ services:
   # Zipkin docker initialization
   # The zipkin process exposes the POST endpoint that instrumentation can send trace data to.
   zipkin:
-    image: openzipkin/zipkin
+    image: openzipkin/zipkin:latest
     container_name: zipkin
     restart: always
     environment:
