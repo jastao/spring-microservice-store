@@ -56,7 +56,7 @@ function start_service () {
 
 function stop_all () {
   echo "Stopping all services"
-  docker-compose -f ${docker_compose_file} down
+  docker-compose -f ${docker_compose_file} down --remove-orphans
   docker-compose -f ${docker_compose_file} rm -f
 }
 
@@ -74,7 +74,8 @@ function restart () {
 
 # Should not be called explicitly
 function run_docker_compose() {
-  docker-compose -f ${docker_compose_file} up --build --remove-orphans -d $1
+  docker-compose build --pull
+  docker-compose -f ${docker_compose_file} up --remove-orphans -d $1
 }
 
 if [ $# == 0 ]
