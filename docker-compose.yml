@@ -144,7 +144,7 @@ services:
   # Only the edge-service is exposed to the outside thru port 8080. All other internal services are only accessible
   # thru the edge-service on port 8080.
   # Docker image configuration for the Spring Cloud Gateway
-  edge-service:s
+  edge-service:
     image: jastao/edge-service:latest
     container_name: edge-service
     build: ./edge-service
